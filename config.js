@@ -1,4 +1,4 @@
-/* =========================================================================
+/* ========================================================================
    Konten sheet-config.js DIGABUNG langsung di sini (inline) supaya file HTML
    ini 100% MANDIRI — tidak lagi bergantung pada file eksternal manapun untuk
    bisa tampil. Ini sengaja dibuat begini karena banyak tempat (preview di
