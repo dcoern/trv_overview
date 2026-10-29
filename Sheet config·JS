@@ -52,7 +52,7 @@
    ========================================================================= */
 
 const SHEET_CONFIG = {
-  spreadsheetId: "PASTE_SPREADSHEET_ID_DI_SINI",
+  spreadsheetId: "1ySfQyzsoLJT-X0ZRs9WOEIbqAc7FGdtv52d3eRNRIrY",
 
   // Nama TAB per Source — HARUS PERSIS sama dengan nama tab di Google Sheets.
   sourceSheets: {
