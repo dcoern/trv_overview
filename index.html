@@ -8,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#3f3f4e;
+    --bg:#0A0D12;
     --panel:#12161D;
     --panel-2:#171C25;
     --line:#20262F;
@@ -232,6 +232,10 @@
   #kpiGrid .kpi-card{ padding:13px 12px 12px 15px; border-radius:12px; }
   #kpiGrid .kpi-label{ font-size:10px; letter-spacing:0.05em; margin-bottom:8px; line-height:1.25; min-height:25px; }
   #kpiGrid .kpi-value{ font-size:clamp(12px, 1.1vw, 17px); overflow-wrap:normal; white-space:nowrap; }
+  .kpi-split{ margin-top:8px; display:flex; flex-direction:column; gap:3px; font-family:'JetBrains Mono',monospace; font-size:10.5px; }
+  .kpi-split > div{ display:flex; justify-content:space-between; gap:8px; padding-top:3px; border-top:1px dashed var(--line); }
+  .kpi-split span{ color:var(--muted); letter-spacing:0.04em; }
+  .kpi-split b{ color:var(--hi); font-weight:600; white-space:nowrap; }
   #kpiGrid .kpi-delta{ font-size:10.5px; margin-top:6px; line-height:1.3; }
   .kpi-card:hover{ transform:translateY(-2px); border-color:#2b3340; }
   .kpi-card .accent-bar{ position:absolute; left:0; top:0; bottom:0; width:3px; }
@@ -1140,6 +1144,27 @@ function currentScope(){
   return {label:"Semua Marketing", data: GRAND, isUnit:false};
 }
 
+/** Rincian per Marketing_category untuk kartu Est. Revenue / Est. Closing.
+ *  Level Semua Marketing -> satu baris per Category (B2B, B2C, ...).
+ *  Saat drill-down ke Type/Business -> satu baris: Category induknya. */
+function _catSplit(key){
+  const isAch = key === 'achPct';
+  const fmt = v => isAch ? v.toFixed(2) + '%' : fmtVal(v, false);
+  const sumBy = list => isAch ? _aggregate(list.map(c => c.total)).achPct : list.reduce((s,c)=> s + c.total[key], 0);
+  if(state.channel){
+    const cat = state.channel.category || 'Marketing';
+    return [{ label: cat, value: fmt(state.unit ? state.unit[key] : state.channel.total[key]) }];
+  }
+  const cats = [];
+  DATA.forEach(c => {
+    const name = c.category || 'Lainnya';
+    let g = cats.find(x => x.name === name);
+    if(!g){ g = { name, list: [] }; cats.push(g); }
+    g.list.push(c);
+  });
+  return cats.map(g => ({ label: g.name, value: fmt(sumBy(g.list)) }));
+}
+
 function renderKPIs(){
   const scope = currentScope();
   const d = scope.data;
@@ -1148,9 +1173,9 @@ function renderKPIs(){
   const cards = [
     {label:"Target Bulan", value: fmtVal(d.target,false), accent:"var(--amber)", delta:null},
     {label:"MTD Target", value: fmtVal(d.mtdTarget,false), accent:"var(--muted-2)", delta:null},
-    {label:"Est. Revenue", value: fmtVal(d.actual,false), accent:"var(--teal)", delta:null},
-    {label:"Est. Closing", value: fmtVal(d.closing,false), accent:"var(--green)", delta: d.closing - d.target},
-    {label:"Achievement %", value: d.achPct.toFixed(2)+"%", accent: d.gapPct>=0?"var(--green)":"var(--red)", delta: d.gapPct},
+    {label:"Est. Revenue", value: fmtVal(d.actual,false), accent:"var(--teal)", delta:null, split:_catSplit("actual")},
+    {label:"Est. Closing", value: fmtVal(d.closing,false), accent:"var(--green)", delta:null, split:_catSplit("closing")},
+    {label:"Achievement %", value: d.achPct.toFixed(2)+"%", accent: d.gapPct>=0?"var(--green)":"var(--red)", delta: d.gapPct, split:_catSplit("achPct")},
   ];
 
   if(state.compareMode !== 'all'){
@@ -1167,7 +1192,8 @@ function renderKPIs(){
       <div class="kpi-value">${c.value}</div>
       ${c.isGrowth
         ? `<div class="kpi-delta ${c.cmp.growth===null?'flat':(c.cmp.growth>=0?'up':'down')}">${c.cmp.prior!==null ? fmtVal(c.cmp.curr,false)+' vs '+fmtVal(c.cmp.prior,false) : 'Data pembanding tidak tersedia'}</div>`
-        : c.delta!==null ? `<div class="kpi-delta ${c.delta>0?'up':c.delta<0?'down':'flat'}">${c.delta>0?'▲':c.delta<0?'▼':'—'} ${c.label==='Achievement %' ? pct(c.delta)+' vs MTD' : fmtVal(Math.abs(c.delta),false)+' vs target'}</div>` : `<div class="kpi-delta flat">&nbsp;</div>`}
+        : c.delta!==null ? `<div class="kpi-delta ${c.delta>0?'up':c.delta<0?'down':'flat'}">${c.delta>0?'▲':c.delta<0?'▼':'—'} ${c.label==='Achievement %' ? pct(c.delta)+' vs MTD' : fmtVal(Math.abs(c.delta),false)+' vs target'}</div>` : (c.split ? '' : `<div class="kpi-delta flat">&nbsp;</div>`)}
+      ${(!c.isGrowth && c.split) ? `<div class="kpi-split">${c.split.map(x=>`<div><span>${x.label}</span><b>${x.value}</b></div>`).join('')}</div>` : ''}
     </div>
   `).join('');
 
