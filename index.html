@@ -8,7 +8,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
- /*   --bg:#0A0D12; */
     --bg:#3f3f4e;
     --panel:#12161D;
     --panel-2:#171C25;
@@ -223,13 +222,17 @@
 
   /* ---------- KPI grid ---------- */
   .kpis{
-    display:grid; grid-template-columns:repeat(auto-fit, minmax(175px, 1fr)); gap:14px;
-    padding:22px 32px; border-bottom:1px solid var(--line);
+    display:grid; grid-template-columns:repeat(var(--n,7), minmax(0, 1fr)); gap:10px;
+    padding:18px 32px; border-bottom:1px solid var(--line);
   }
   .kpi-card{
     background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:16px 18px;
     position:relative; overflow:hidden; transition:transform .15s ease, border-color .15s ease; min-width:0;
   }
+  #kpiGrid .kpi-card{ padding:13px 12px 12px 15px; border-radius:12px; }
+  #kpiGrid .kpi-label{ font-size:10px; letter-spacing:0.05em; margin-bottom:8px; line-height:1.25; min-height:25px; }
+  #kpiGrid .kpi-value{ font-size:clamp(12px, 1.1vw, 17px); overflow-wrap:normal; white-space:nowrap; }
+  #kpiGrid .kpi-delta{ font-size:10.5px; margin-top:6px; line-height:1.3; }
   .kpi-card:hover{ transform:translateY(-2px); border-color:#2b3340; }
   .kpi-card .accent-bar{ position:absolute; left:0; top:0; bottom:0; width:3px; }
   .kpi-label{ font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:10px; }
@@ -360,13 +363,19 @@
   .gap-up{ color:var(--green); } .gap-down{ color:var(--red); }
   tr.total-row td{ background:var(--panel-2); font-weight:700; color:var(--hi); }
 
+  @media (max-width:1240px){
+    #kpiGrid.kpis{ grid-template-columns:repeat(4, minmax(0,1fr)); }
+    #kpiGrid .kpi-value{ font-size:clamp(13px, 1.5vw, 16px); }
+  }
   @media (max-width:1000px){
     .layout{ grid-template-columns:1fr; }
     aside.nav{ border-right:none; border-bottom:1px solid var(--line); }
   }
   @media (max-width:640px){
     header.dash-header{ padding:20px 18px 16px; }
-    .kpis{ padding:16px 18px; }
+    .kpis{ padding:14px 18px; }
+    #kpiGrid.kpis{ grid-template-columns:repeat(2, minmax(0,1fr)); gap:8px; }
+    #kpiGrid .kpi-value{ font-size:clamp(12px, 3.3vw, 15px); }
     section.content{ padding:18px 18px 30px; }
     .pace-chip{ min-width:0; width:100%; }
   }
@@ -380,7 +389,7 @@
 <div class="page-tabs" id="pageTabs"></div>
 
 <div class="source-tabs-row" id="sourceTabsRow">
-  <div class="source-tabs"><span class="tabs-label">Data</span><span class="data-label">Marketing Revenue</span></div>
+  <div class="source-tabs"><span class="tabs-label">Data</span><span class="data-label">Marketing Revenue · tab Google Sheet "Marketing"</span></div>
   <div class="global-status">
     <span class="datasrc loading" id="dataSrcBadge"><span class="dot"></span><span id="dataSrcText">Memuat data...</span></span>
     <button class="refresh-btn" id="refreshBtn" title="Ambil ulang data dari Google Sheet">↻ Refresh</button>
@@ -394,7 +403,7 @@
 
 <header class="dash-header">
   <div>
-    <div class="brand-eyebrow"><span class="live-dot"></span> TRV · REVENUE COMMAND</div>
+    <div class="brand-eyebrow"><span class="live-dot"></span> MNC GROUP · REVENUE COMMAND</div>
     <h1 id="dashTitle">Pantauan Pendapatan — Juli 2026</h1>
     <div class="sub" id="headerSub">Target periode Jul-2026 &nbsp;·&nbsp; Aktual per 17-Jul-2026 &nbsp;·&nbsp; 2 Marketing Category / 3 Marketing Type / 13 Business</div>
     <div class="data-asof" id="dataAsOfNote"></div>
@@ -451,8 +460,6 @@
       <div class="chart-canvas-wrap" id="chartWrap"></div>
     </div>
 
-    <div class="eoy-panel" id="eoyPanel"></div>
-
     <div class="table-card">
       <table id="mainTable">
         <thead id="tableHead"></thead>
@@ -467,7 +474,7 @@
 <div id="pageReportOverview" style="display:none;">
   <div class="report-header">
     <div>
-      <div class="brand-eyebrow"><span class="live-dot"></span> TRV · REVENUE COMMAND</div>
+      <div class="brand-eyebrow"><span class="live-dot"></span> MNC GROUP · REVENUE COMMAND</div>
       <h1>Report Overview <span style="color:var(--muted); font-weight:500;">— Bulanan &amp; Tahunan</span></h1>
       <div class="sub" id="reportHeaderSub">Ringkasan eksekutif Revenue — semua periode yang tersedia di sheet</div>
     </div>
@@ -489,7 +496,21 @@
 
   <section class="report-section">
     <div class="report-section-head">
-      <h2>2. Overview Revenue Bulanan</h2>
+      <h2>2. Proyeksi End of Year</h2>
+      <span class="report-section-note" id="eoyReportNote"></span>
+    </div>
+    <div class="eoy-panel" id="eoyPanelReport"></div>
+    <div class="table-card table-card-scroll">
+      <table>
+        <thead id="eoyTypeHead"></thead>
+        <tbody id="eoyTypeBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="report-section">
+    <div class="report-section-head">
+      <h2>3. Overview Revenue Bulanan</h2>
       <span class="report-section-note" id="monthlyReportNote"></span>
     </div>
     <div class="kpis" id="monthlyKpiGrid"></div>
@@ -966,12 +987,14 @@ function buildSyntheticMetricsData(source){
 }
 
 /* ============ HELPERS ============ */
+const _ceil1 = v => Math.ceil(v * 10 - 1e-7) / 10;   // pembulatan ke atas, 1 desimal
 const fmtIDR = (n, compact=true) => {
-  if(!compact) return "Rp " + n.toLocaleString('id-ID',{maximumFractionDigits:0});
-  const abs = Math.abs(n);
-  if(abs >= 1e9) return "Rp " + (n/1e9).toFixed(2) + " M";
-  if(abs >= 1e6) return "Rp " + (n/1e6).toFixed(1) + " Jt";
-  return "Rp " + n.toLocaleString('id-ID',{maximumFractionDigits:0});
+  // >= 1 miliar -> "15.3 Bio"; >= 1 juta -> "15.3 Mio" (dibulatkan KE ATAS); di bawahnya ditulis penuh
+  if(!isFinite(n) || n === 0) return "Rp 0";
+  const abs = Math.abs(n), sign = n < 0 ? "-" : "";
+  if(abs >= 1e9) return sign + "Rp " + _ceil1(abs/1e9).toFixed(1) + " Bio";
+  if(abs >= 1e6) return sign + "Rp " + _ceil1(abs/1e6).toFixed(1) + " Mio";
+  return sign + "Rp " + Math.round(abs).toLocaleString('id-ID');
 };
 /** Formatter angka generik untuk metric Views/Video (bukan Rupiah). */
 const fmtNum = (n, compact=true) => {
@@ -1015,8 +1038,8 @@ function _sumClosingOverPeriodsAt(periodsArr, channelName, unitName){
 /** Proyeksi Est. Closing End of Year (run-rate):
  *    EOY = YTD Est. Closing (Jan s/d bulan terpilih) + (YTD / n bulan ber-data) x sisa bulan
  *  Target Tahunan diambil dari kolom "Target Tahunan" (periode terpilih). */
-function computeEOY(channelName, unitName){
-  const { y, m } = parsePeriod(currentPeriod);
+function computeEOY(channelName, unitName, period){
+  const { y, m } = parsePeriod(period || currentPeriod);
   let ytd = 0, n = 0;
   for(let mm = 1; mm <= m; mm++){
     const sc = _scopeAt(periodKey(y, mm), channelName, unitName);
@@ -1122,16 +1145,12 @@ function renderKPIs(){
   const d = scope.data;
   const channelName = state.channel ? state.channel.name : null;
   const unitName = state.unit ? state.unit.name : null;
-  const eoy = computeEOY(channelName, unitName);
-
   const cards = [
-    {label:"Target (Full Month)", value: fmtVal(d.target,false), accent:"var(--amber)", delta:null},
+    {label:"Target Bulan", value: fmtVal(d.target,false), accent:"var(--amber)", delta:null},
     {label:"MTD Target", value: fmtVal(d.mtdTarget,false), accent:"var(--muted-2)", delta:null},
-    {label:"Est. Revenue (Aktual)", value: fmtVal(d.actual,false), accent:"var(--teal)", delta:null},
-    {label:"Est. Closing (Proyeksi)", value: fmtVal(d.closing,false), accent:"var(--green)", delta: d.closing - d.target},
+    {label:"Est. Revenue", value: fmtVal(d.actual,false), accent:"var(--teal)", delta:null},
+    {label:"Est. Closing", value: fmtVal(d.closing,false), accent:"var(--green)", delta: d.closing - d.target},
     {label:"Achievement %", value: d.achPct.toFixed(2)+"%", accent: d.gapPct>=0?"var(--green)":"var(--red)", delta: d.gapPct},
-    {label:`Target Tahunan ${eoy.year}`, value: eoy.yearlyTarget>0 ? fmtVal(eoy.yearlyTarget,false) : "Belum diisi", accent:"var(--amber)", delta:null},
-    {label:`Est. Closing EOY ${eoy.year}`, value: fmtVal(eoy.eoy,false), accent:"var(--teal)", eoyDelta: eoy},
   ];
 
   if(state.compareMode !== 'all'){
@@ -1140,6 +1159,7 @@ function renderKPIs(){
     cards.push({label:`Growth · ${cmpLabel}`, value: cmp.growth===null ? "N/A" : pct(cmp.growth), accent: cmp.growth===null?"var(--muted-2)":(cmp.growth>=0?"var(--green)":"var(--red)"), delta:null, isGrowth:true, cmp});
   }
 
+  document.getElementById('kpiGrid').style.setProperty('--n', cards.length);
   document.getElementById('kpiGrid').innerHTML = cards.map(c => `
     <div class="kpi-card">
       <div class="accent-bar" style="background:${c.accent}"></div>
@@ -1147,20 +1167,15 @@ function renderKPIs(){
       <div class="kpi-value">${c.value}</div>
       ${c.isGrowth
         ? `<div class="kpi-delta ${c.cmp.growth===null?'flat':(c.cmp.growth>=0?'up':'down')}">${c.cmp.prior!==null ? fmtVal(c.cmp.curr,false)+' vs '+fmtVal(c.cmp.prior,false) : 'Data pembanding tidak tersedia'}</div>`
-        : c.eoyDelta
-          ? (c.eoyDelta.ach===null
-              ? `<div class="kpi-delta flat">Target tahunan belum diisi</div>`
-              : `<div class="kpi-delta ${c.eoyDelta.ach>=100?'up':'down'}">${c.eoyDelta.ach>=100?'▲':'▼'} ${c.eoyDelta.ach.toFixed(2)}% dari target tahunan</div>`)
-          : c.delta!==null ? `<div class="kpi-delta ${c.delta>0?'up':c.delta<0?'down':'flat'}">${c.delta>0?'▲':c.delta<0?'▼':'—'} ${c.label==='Achievement %' ? pct(c.delta)+' gap MTD' : fmtVal(Math.abs(c.delta),false)+ ' vs target'}</div>` : `<div class="kpi-delta flat">&nbsp;</div>`}
+        : c.delta!==null ? `<div class="kpi-delta ${c.delta>0?'up':c.delta<0?'down':'flat'}">${c.delta>0?'▲':c.delta<0?'▼':'—'} ${c.label==='Achievement %' ? pct(c.delta)+' vs MTD' : fmtVal(Math.abs(c.delta),false)+' vs target'}</div>` : `<div class="kpi-delta flat">&nbsp;</div>`}
     </div>
   `).join('');
 
-  renderEOYPanel(scope.label, eoy);
 }
 
 /** Panel rinci proyeksi End of Year + rumusnya (selalu ditampilkan). */
-function renderEOYPanel(scopeLabel, e){
-  const el = document.getElementById('eoyPanel');
+function renderEOYPanel(elId, scopeLabel, e){
+  const el = document.getElementById(elId);
   if(!el) return;
   const monLabel = ID_MONTHS[e.month-1];
   const hasT = e.yearlyTarget > 0;
@@ -2059,6 +2074,38 @@ function renderReportOverview(){
     `Ringkasan eksekutif Revenue Marketing — semua periode yang tersedia di sheet`;
   renderMonthlyReport();
   renderYearlyReport();
+  renderEOYReport();
+}
+
+/** Section "Proyeksi End of Year" di Report Overview: Grand Total + rincian per
+ *  Marketing Category / Type, memakai periode berjalan terbaru di sheet. */
+function renderEOYReport(){
+  const md = sourcesData[state.source] && sourcesData[state.source].revenue;
+  const note = document.getElementById('eoyReportNote');
+  const head = document.getElementById('eoyTypeHead'), body = document.getElementById('eoyTypeBody');
+  if(!md){ return; }
+  const per = md.latestActualPeriod || md.currentPeriod;
+  const idx = md.periodsIndex[per];
+  // computeEOY/_scopeAt membaca periodsIndex global -> arahkan sementara ke data revenue
+  const saved = periodsIndex; periodsIndex = md.periodsIndex;
+  try{
+    const grand = computeEOY(null, null, per);
+    note.textContent = `Berdasarkan data s/d ${formatPeriodLabel(per)}` + (md.comparisonsAreSynthetic ? ' · * data contoh (demo)' : '');
+    renderEOYPanel('eoyPanelReport', 'Semua Marketing', grand);
+
+    head.innerHTML = `<tr><th>Marketing Category / Type</th><th>YTD Est. Closing</th><th>Rata-rata / Bulan</th><th>Est. Closing EOY</th><th>Target Tahunan</th><th>Gap EOY</th><th>Achv EOY %</th></tr>`;
+    const cats = [];
+    idx.DATA.forEach(c => { let g = cats.find(x=>x.name===c.category); if(!g){ g={name:c.category, types:[]}; cats.push(g);} g.types.push(c); });
+    const row = (label, e, cls, indent) => `<tr class="${cls}"><td class="${indent?'indent':''}">${label}</td><td>${fmtIDR(e.ytd)}</td><td>${fmtIDR(e.avg)}</td><td>${fmtIDR(e.eoy)}</td><td>${e.yearlyTarget>0?fmtIDR(e.yearlyTarget):'-'}</td><td class="${e.yearlyTarget>0?(e.gap>=0?'gap-up':'gap-down'):''}">${e.yearlyTarget>0?(e.gap>=0?'▲ ':'▼ ')+fmtIDR(Math.abs(e.gap)):'-'}</td><td class="${e.ach===null?'':(e.ach>=100?'gap-up':'gap-down')}">${e.ach===null?'N/A':e.ach.toFixed(2)+'%'}</td></tr>`;
+    let html = '';
+    cats.forEach(g => {
+      const es = g.types.map(t => computeEOY(t.name, null, per));
+      if(g.name) html += row(g.name + ' Total', sumEOY(es), 'cat-row', false);
+      g.types.forEach((t,i) => { html += row(t.name, es[i], '', !!g.name); });
+    });
+    html += row('Grand Total', grand, 'total-row', false);
+    body.innerHTML = html;
+  } finally { periodsIndex = saved; }
 }
 
 /** Ambil semua periode Revenue (untuk source aktif), urut menaik, hitung
