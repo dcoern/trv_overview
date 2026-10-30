@@ -1171,8 +1171,8 @@ function renderKPIs(){
   const channelName = state.channel ? state.channel.name : null;
   const unitName = state.unit ? state.unit.name : null;
   const cards = [
-    {label:"Target Bulan", value: fmtVal(d.target,false), accent:"var(--amber)", delta:null},
-    {label:"MTD Target", value: fmtVal(d.mtdTarget,false), accent:"var(--muted-2)", delta:null},
+    {label:"Target Bulan", value: fmtVal(d.target,false), accent:"var(--amber)", delta:null, split:_catSplit("target")},
+    {label:"MTD Target", value: fmtVal(d.mtdTarget,false), accent:"var(--muted-2)", delta:null, split:_catSplit("mtdTarget")},
     {label:"Est. Revenue", value: fmtVal(d.actual,false), accent:"var(--teal)", delta:null, split:_catSplit("actual")},
     {label:"Est. Closing", value: fmtVal(d.closing,false), accent:"var(--green)", delta:null, split:_catSplit("closing")},
     {label:"Achievement %", value: d.achPct.toFixed(2)+"%", accent: d.gapPct>=0?"var(--green)":"var(--red)", delta: d.gapPct, split:_catSplit("achPct")},
